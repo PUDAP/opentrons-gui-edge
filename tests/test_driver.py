@@ -80,7 +80,7 @@ class ElementClickTests(unittest.TestCase):
 
     def test_lookup_is_read_only_and_role_disambiguates(self):
         d, clicked = self._driver([elem(1, "Start", role="text"), elem(2, "Start")])
-        self.assertEqual(len(d.get_elements()["elements"]), 2)
+        self.assertEqual(len(d.capture_screenshot(include_elements=True)["elements"]), 2)
         self.assertEqual(d.find_element("Start", "push button")["element_index"], 2)
         self.assertEqual(clicked, [])
         self.assertEqual(d.click_element("Start", "push button")["clicked_element"], 2)
@@ -415,53 +415,43 @@ class StartupEnvTests(unittest.TestCase):
 
 
 class CommandSurfaceTests(unittest.TestCase):
+    def test_capture_optionally_returns_independent_elements_from_one_capture(self):
+        elements = [elem(1, "Start", frame={"x": 10})]
+        capture = mock.AsyncMock(return_value=SimpleNamespace(
+            content=[SimpleNamespace(type="image", data="PNG")],
+        ))
+        d = make_driver(capture=capture, _last_elements=elements)
+        result = d.capture_screenshot(include_elements=True)
+        self.assertEqual(result["image_b64"], "PNG")
+        self.assertEqual(result["elements"], elements)
+        capture.assert_awaited_once_with(app="Demo", include_elements=True)
+        result["elements"][0]["frame"]["x"] = 99
+        self.assertEqual(elements[0]["frame"]["x"], 10)
+        self.assertNotIn("elements", d.capture_screenshot())
+        self.assertFalse(hasattr(d, "get_elements"))
+
     def test_only_explicit_machine_commands_are_remote(self):
         self.assertEqual(
             resolve_command_names(object.__new__(Driver)),
-            {"capture_screenshot", "get_elements", "find_element", "wait_for_element",
-             "click_element", "set_value", "type_text", "scroll", "press_key",
-             "click_at", "import_file"},
+            {"capture_screenshot", "get_protocol_list", "import_protocol",
+             "start_setup", "select_robot", "start_run", "pause_run", "resume_run",
+             "cancel_run", "get_run_status", "list_devices", "list_labware"},
         )
         self.assertEqual(resolve_command_names(object.__new__(GuiDriver)), set())
 
-    def test_example_import_composes_gui_operations(self):
-        d = make_driver()
-        calls = mock.Mock()
-        d.click_element = calls.click
-        d._choose_file_in_dialog = calls.choose
-        d.capture_screenshot = calls.capture
-        d.find_element = calls.find
-        calls.find.side_effect = ElementNotFoundError("absent")
-        d.wait_for_element = calls.wait
-        calls.wait.return_value = {"label": "Loaded method.xml"}
-        self.assertEqual(d.import_file("/tmp/method.xml", "Loaded method.xml"), {
-            "imported_file": "/tmp/method.xml",
-        })
-        self.assertEqual(calls.mock_calls, [
-            mock.call.find("Loaded method.xml", ""), mock.call.click("Import"),
-            mock.call.wait("Browse", timeout=30.0, error_labels=["Import failed"]),
-            mock.call.click("Browse"), mock.call.choose("/tmp/method.xml", timeout=30.0),
-            mock.call.wait("Loaded method.xml", "", timeout=30.0, error_labels=["Import failed"]),
-        ])
-        calls.reset_mock()
-        with self.assertRaises(ValueError):
-            d.import_file("  ", "Loaded method.xml")
-        self.assertEqual(calls.mock_calls, [])
+    def test_generic_import_is_removed(self):
+        self.assertFalse(hasattr(Driver, "import_file"))
 
-    def test_import_rejects_stale_success_and_does_not_hide_timeout(self):
-        d = make_driver()
-        d.find_element = mock.Mock(return_value={"label": "Loaded"})
-        d.click_element = mock.Mock()
-        with self.assertRaisesRegex(RuntimeError, "already exists"):
-            d.import_file("/tmp/file", "Loaded")
-        d.click_element.assert_not_called()
-        d.find_element.side_effect = ElementNotFoundError("absent")
-        d.wait_for_element = mock.Mock(side_effect=[{}, TimeoutError("not loaded")])
-        d._choose_file_in_dialog = mock.Mock()
-        d.capture_screenshot = mock.Mock()
-        with self.assertRaisesRegex(TimeoutError, "not loaded"):
-            d.import_file("/tmp/file", "Loaded")
-        d.capture_screenshot.assert_not_called()
+    def test_low_level_actions_remain_inherited_but_not_remote(self):
+        d = object.__new__(Driver)
+        remote = resolve_command_names(d)
+        for name in ("find_element", "wait_for_element", "click_element", "set_value",
+                     "type_text", "scroll", "press_key", "click_at"):
+            with self.subTest(name=name):
+                self.assertNotIn(name, Driver.__dict__)
+                self.assertIs(getattr(Driver, name), getattr(GuiDriver, name))
+                self.assertTrue(callable(getattr(d, name)))
+                self.assertNotIn(name, remote)
 
     def test_capture_returns_screenshot_without_caching_image(self):
         async def capture(app=None, include_elements=False):

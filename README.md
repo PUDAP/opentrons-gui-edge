@@ -1,4 +1,143 @@
-# edge-python-gui-template
+# opentron-gui-edge
+
+Opentrons GUI edge scaffold based on `PUDAP/edge-python-gui-template`, commit
+`f72a05931341862c51cd169aa8a1896bcfbcf0c1`.
+
+Screenshot contract updated from upstream commit
+`e80b62a2cfa70c1f54a3405eb35114c7717bd7bf`: a single capture can return
+image, capture context, and copied accessibility elements; `get_elements` is removed.
+
+Implemented Opentrons command: `get_protocol_list()` (first high-level `@command`
+in `driver.py`). It navigates to Protocols when necessary and returns
+`{"protocols": [{"name": "...", "instruments": [], "updated": "..."}], "count": N}`.
+Duplicate names are preserved; timestamps use the App display format. It reads
+AX cards, including offscreen entries, and requires the list's footer to reject
+truncated/unsupported captures. Layouts without this footer (including unverified
+empty-library layouts) raise instead of claiming an empty list. No robot actions
+are dispatched. Verified on the live desktop library: 8 cards; 61 tests pass.
+
+After configuring and starting the edge, invoke:
+`puda machine run opentron-gui-edge get_protocol_list`
+
+`import_protocol(file_path, timeout=30.0)` imports an existing absolute `.py` or
+`.json` path through Protocols → Import → browse → the system file picker. It
+validates the path before input and returns `imported_file` plus the newly observed
+protocol card. It never starts setup/runs or automatically repeats an uncertain
+import. Library-card verification is not proof of successful protocol analysis.
+Concurrent imports can make card attribution ambiguous; serialize GUI commands.
+This command uses the existing native-dialog helper, which foregrounds the chooser
+and types its path on Linux. End-to-end import testing requires a selected file
+and permission to use foreground input; it has only been tested offline so far.
+
+Example after deployment:
+`puda machine run opentron-gui-edge import_protocol --file_path "/absolute/path/protocol.py"`
+
+`start_setup(protocol_name: str)` opens the exact named card's three-dot menu,
+chooses `Start setup`, and waits for the robot-selection entry screen containing
+`Proceed to setup` (it may be disabled). Returns `protocol_name` and
+`setup_open=True`. It does not select a robot or click `Proceed to setup` and
+never starts a run. Duplicate names, missing cards, ambiguous menus, and offscreen
+buttons raise before menu input. Scroll the intended card into view beforehand.
+Waits are bounded to 10 seconds per phase; no setup click is automatically retried.
+This command is offline-tested; live setup navigation has not been exercised.
+
+Example after deployment:
+`puda machine run opentron-gui-edge start_setup --protocol_name "100 uL Water Transfer"`
+
+`select_robot(robot_name: str = "")` selects a robot in the currently open
+robot-choice drawer. Omitted/empty name uses the first listed card; supplied names
+match exactly. No listed robots, missing names, duplicates, unsupported/closed
+drawers, and offscreen targets raise without a selection click. After selecting,
+it waits for an enabled `Proceed to setup`, clicks once, and verifies the intended
+robot's visible `Not started` setup page. This uploads/creates the setup run on
+the robot; use only with setup-progression authorization. It never clicks Start run.
+
+Returns `robot_name`, `selection_dispatched`, `selection_verified`, and
+`setup_open=True`. The selection flag refers only to AX card selection and can be
+false for CSS-only cards; `setup_open` requires a separate destination-page check.
+Proceed availability waits up to 10 seconds; setup-page verification up to 30.
+Timeouts raise without repeating Proceed. The implementation is offline-tested,
+not live-tested.
+
+Examples after deployment:
+`puda machine run opentron-gui-edge select_robot`
+`puda machine run opentron-gui-edge select_robot --robot_name "your-robot-name"`
+
+`start_run(timeout: float = 30.0)` operates on the current prepared run only.
+The caller must verify robot/protocol identity, successful analysis, setup readiness,
+physical clearance and authorization. It requires `Not started` and one enabled
+Start run button, clicks once, then returns `started=True` with observed `Running`
+or `Completed`. It raises on failure, a confirmation dialog, or timeout and never
+silently confirms warnings or repeats Start. Short runs may complete before a
+Running capture. A run-start response is not proof of experiment completion unless
+its returned status is Completed.
+
+Live-test preparation revealed that even the comment-only import-fix protocol's
+App Run Preview includes automatic homing before the comment. Do not classify it
+as motion-free based on source alone. The queued run was inspected but not started:
+additional homing/clearance authorization was unanswered. Evidence is in
+`docs/live-test/`; live Start run remains untested.
+
+Run-state commands (all operate on the current run-detail page):
+
+- `get_run_status()` is read-only and returns robot/protocol identity, displayed
+  run timestamp, status, run time, enabled header controls, and confirmation_pending.
+  This is the requested name; no `get_run_process` alias was added. The parser scopes
+  the run header so preview headings and historical records are not mistaken for
+  current state. Status and timestamps retain the App's wording/format.
+- `pause_run(timeout=30.0)` requires Running, clicks Pause run once, verifies Paused.
+- `resume_run(timeout=30.0)` requires Paused, clicks Resume run once, verifies
+  Running or rapid Completed. Door-open/recovery states are not bypassed.
+- `cancel_run(timeout=30.0)` clicks Cancel run and confirms only the standard
+  `Are you sure you want to cancel?` → `Yes, cancel run` modal, then verifies
+  Canceled. OT-2 cancellation can drop attached tips and home; modules can remain
+  active. Caller must authorize these consequences and verify physical clearance.
+
+Every control checks that robot/protocol/run identity remains unchanged, uses fresh
+read-back, rejects invalid states and unknown warnings, and never retries input
+on timeout. A run-state response is not independent proof that all hardware has
+stopped or cleanup ended. Control methods are offline-tested, not live-exercised.
+The read-only status method was live-tested and observed the harmless queued run
+as Completed with App-displayed duration `00:00:18`; this agent did not start it.
+
+Inventory commands:
+
+- `list_devices()` navigates to Devices, expands collapsed availability sections,
+  and returns `devices` (name, model, available, instruments) plus `count`. It checks
+  parsed counts against Available/Not Available section totals. Availability does
+  not imply idle robot state; no robot controls are opened.
+- `list_labware(category="All", sort_by="Alphabetical")` navigates to Labware,
+  selects the actual GUI category and sort options, and returns `labware`
+  (name, category, api_name), `count`, selected `category`, and `sort_by`. It keeps
+  the GUI order, includes offscreen accessibility cards, and verifies the list footer.
+  No labware definitions are imported, deleted or modified.
+
+Category labels (case-insensitive): All, Adapter, Aluminum Block, Custom Labware,
+Lid, Reservoir, Tip Rack, Tube Rack, Well Plate.
+Sort labels (case-insensitive): Alphabetical, Reverse alphabetical.
+Unsupported labels raise before navigation. No fuzzy aliases are inferred.
+
+Live-tested: 2 devices; default All/Alphabetical returned 119 labware definitions;
+Tip Rack/Reverse alphabetical returned 18 definitions in the reversed baseline
+order; Custom Labware returned a verified empty list. Defaults were restored after
+validation. Full results are saved under `docs/live-test/` as
+`list-devices.json`, `list-labware-all.json`, and `list-labware-tip-rack-reverse.json`.
+
+Examples after deployment:
+`puda machine run opentron-gui-edge list_devices`
+`puda machine run opentron-gui-edge list_labware --category "Tip Rack" --sort_by "Reverse alphabetical"`
+
+The generic template `import_file` command has been removed. Use `import_protocol`
+for Opentrons imports. Only the high-level workflows and the inspection
+command listed below are remotely exposed; low-level actions remain inherited
+Python operations for internal use.
+
+The example configuration targets `Opentrons OT-2` (the observed App name/title,
+not the broad `Opentrons` substring which can also match editor windows) and proposes machine ID
+`opentron-gui-edge`. Confirm the machine ID and NATS servers before deployment.
+No live `.env` is created and no edge service is started during scaffolding.
+
+Generic template documentation follows.
 
 A template for PUDA edge services that integrate **any desktop instrument software** into PUDA without a hardware SDK. Copy it once per machine, set the window name, and add that machine's commands. It runs on **Windows** and **Linux (X11)**.
 
@@ -134,89 +273,73 @@ uv run python main.py
 
 ## GUI operations and remote commands
 
-`driver.py` starts with an explicit constructor calling `super().__init__(target_app=target_app)`, followed by high-level machine commands and then low-level GUI commands. The high-level section contains workflows such as `import_file`, including preconditions and completion checks. The low-level section contains thin delegates for inspection and individual actions. Add new instrument workflows to the high-level section.
+`driver.py` exposes these commands through `@command`:
 
-`GuiDriver` has no `@command` decorators. Its methods below are ordinary Python operations available to machine code. The example `Driver` explicitly exposes all of them through decorated overrides, alongside `import_file`. This lets an agent inspect the live GUI, test individual steps, and build high-level machine commands with verified completion. Adapt the import workflow's labels and completion checks before using it. Remove any decorated overrides that a deployed machine does not need; the inherited Python operations remain available internally.
+- Protocols: `get_protocol_list`, `import_protocol`, `start_setup`, `select_robot`.
+- Runs: `start_run`, `pause_run`, `resume_run`, `cancel_run`, `get_run_status`.
+- Inventory: `list_devices`, `list_labware`.
+- Inspection: `capture_screenshot` (optionally with `include_elements=True`).
 
-| Python operation | Description |
-|---|---|
-| `capture_screenshot` | Return `image_b64` and a copied `capture` context (or null) |
-| `get_elements` | Inspect current accessibility elements, labels, and roles |
-| `find_element` | Find one enabled exact label/role match; reject ambiguity |
-| `wait_for_element` | Poll for an exact enabled match; raise on timeout or known error indicators |
-| `click_element` | Resolve and click one exact label/role match from a fresh capture |
-| `set_value` | Set a uniquely matched field through native accessibility |
-| `scroll` | Scroll up, down, left, or right by a positive amount |
-| `type_text` | Type text into the focused control |
-| `press_key` | Send a keyboard shortcut (e.g. `ctrl+s`, `f5`) |
-| `click_at` | Click screenshot pixels using its `capture_id`; reject changed window geometry |
+The eight low-level operations `find_element`, `wait_for_element`, `click_element`,
+`set_value`, `type_text`, `scroll`, `press_key`, and `click_at` are not remotely
+callable. Their decorated overrides were removed from `driver.py`; high-level
+commands still use the ordinary inherited implementations in `GuiDriver`.
+`GuiDriver` now returns copied elements from the same screenshot capture.
+`cua_client.py` is unchanged by this upstream update.
 
-Constructing `Driver` connects the MCP client. `main.py` calls internal `_close()` in a `finally` block on normal exit, cancellation, or failure before retrying. Use `press_key("escape")` to send Escape; there is no generic reset command.
+`capture_screenshot()` returns `image_b64` and copied `capture` metadata.
+`capture_screenshot(include_elements=True)` additionally returns a deep-copied
+`elements` list from that same capture. Without the flag, no elements field is
+returned. The separate `get_elements` method/command has been removed from Driver
+and GuiDriver; internal workflows consume the single screenshot response instead.
+Captures foreground the App and invalidate previous coordinate-capture IDs.
+
+Constructing `Driver` connects the MCP client. `main.py` calls `_close()` in a
+`finally` block on exit or failure. No generic reset command is exposed.
 
 ### Example CLI usage
 
 ```bash
-puda machine run my-instrument capture_screenshot
-puda machine run my-instrument get_elements
-puda machine run my-instrument find_element --label "Import"
-puda machine run my-instrument click_element --label "Import"
-puda machine run my-instrument wait_for_element --label "Browse" --timeout 15
-# After adapting the example workflow to your instrument:
-puda machine run my-instrument import_file --file_path "/path/on/desktop/method.xml" --success_label "Loaded method.xml"
+puda machine run opentron-gui-edge capture_screenshot
+puda machine run opentron-gui-edge capture_screenshot --include_elements true
+puda machine run opentron-gui-edge get_protocol_list
+puda machine run opentron-gui-edge list_labware --category "Tip Rack"
 ```
-
----
 
 ### Command migration
 
 Machine commands call the public methods directly: `find_element`, `click_element`, and `capture_screenshot(include_elements=False)`. The redundant private wrappers have been removed. Use `capture_screenshot()["image_b64"]` when only the PNG is needed.
 
-Command responses omit the configured app name. `capture_screenshot` returns `image_b64` and `capture`; `get_elements` returns `elements`. The configured `target_app` remains in machine state for diagnostics. The copied `capture` context contains `capture_id`, `pid`, `window_id`, `bounds` (window x/y/width/height), and screenshot pixel `width`/`height`.
+Command responses omit the configured app name. `capture_screenshot` returns `image_b64` and `capture`; `include_elements=True` also returns a copied `elements` list from the same capture. The configured `target_app` remains in machine state for diagnostics. The copied `capture` context contains `capture_id`, `pid`, `window_id`, `bounds` (window x/y/width/height), and screenshot pixel `width`/`height`.
 
 `click_at(x, y, capture_id)` requires `result["capture"]["capture_id"]` from the screenshot used to choose coordinates. The ID is single-use and invalidated by subsequent captures or input. The client verifies the exact window's identity, visibility, and bounds before and after foregrounding it; it does not reposition the window or recapture. Call `capture_screenshot` separately for post-click feedback. If capture metadata or native targeted input is unavailable, `capture` is null and coordinate clicks are unavailable. These checks cannot detect changed content inside an otherwise unchanged window or prevent an external change between validation and dispatch.
 
-`capture_screenshot` replaces both `status` and `ask_screen`; interpret images in the calling agent. Replace `find_and_click(description)` with `click_element(label, role)` using exact, case-sensitive values from `get_elements`. Replace `type_text(text, field_description)` with separate `click_element` and `type_text` calls. Machine helpers now use `click_element(label, role)` instead of the former fuzzy helper.
+`capture_screenshot` replaces both `status` and `ask_screen`; interpret images in the calling agent. Replace `find_and_click(description)` with `click_element(label, role)` using exact, case-sensitive values from `capture_screenshot(include_elements=True)["elements"]`. Replace `type_text(text, field_description)` with separate `click_element` and `type_text` calls. Machine helpers now use `click_element(label, role)` instead of the former fuzzy helper.
 
-Matching considers enabled elements only. Missing or duplicate matches raise before input. `get_elements` requires a capture backend that supplies accessibility elements; screenshot-only backends cannot support element lookup. This does not change the client's existing window-selection heuristics or guarantee that the UI action completed; machine commands should check their expected result.
+Matching considers enabled elements only. Missing or duplicate matches raise before input. `capture_screenshot(include_elements=True)` requires a capture backend that supplies accessibility elements; screenshot-only backends cannot support element lookup. This does not change the client's existing window-selection heuristics or guarantee that the UI action completed; machine commands should check their expected result.
 
-## Deploying a New Machine
+## Extending this driver
 
-1. **Copy the template** and install: `git clone … my-machine-guidriver && cd my-machine-guidriver && uv sync`.
-2. **Set `.env`**: `MACHINE_ID`, `NATS_SERVERS`, `TARGET_APP`.
-3. **Add the machine's commands** to `Driver` in `driver.py` and decorate them with `@command`. It subclasses `GuiDriver` and explicitly publishes its public operations through decorated overrides. The private file-dialog helper remains internal. Build machine commands from these operations:
+Keep machine-specific workflows in `driver.py`, reusable Python GUI operations
+in `gui_driver.py`, and MCP/desktop transport in `cua_client.py`. Add `@command`
+only to intended remote workflows; exposing a helper is an explicit API change.
+If overriding the constructor, retain `super().__init__(target_app=target_app)`.
 
-   | Helper | Use |
-   |---|---|
-   | `self.click_element("Start run")` | click one exact accessibility label/role match; reject ambiguity |
-   | `self._run(self._cua.key("ctrl+s"))` / `type_text(...)` / `click(...)` | raw input |
-   | `self._choose_file_in_dialog(path)` | fill a native file dialog (Windows *Open* or GNOME *Open Files*) after your code has clicked Import/Browse |
-   | `self.capture_screenshot()["image_b64"]` | raw base64 PNG of the window |
-   | `self.capture_screenshot(include_elements=True)` | PNG plus a refreshed accessibility element cache |
+High-level commands can call inherited helpers such as `self.click_element(...)`,
+`self.wait_for_element(...)`, and `self._choose_file_in_dialog(...)` without
+making those helpers remotely callable. Use `import_protocol` for the native
+file-picker workflow and `get_run_status` for run-detail read-back.
 
-   See `Driver.import_file` for an executable example that checks for stale success, waits for Browse, submits the file, and waits for the operation's completion indicator. `success_label` is explicit in this template; a production driver should derive it from the requested file or encode an application-specific completion check.
+Document public commands with a summary, parameter descriptions, returned
+evidence, and expected failures. State precisely what a successful return proves.
+Dispatch each consequential action once, verify a fresh operation-specific state,
+and raise on failure/timeout rather than returning a misleading false result.
+Keep robot identity, protocol identity and run identity stable across transitions.
 
-4. **Rename the driver class if you like** (e.g. `HplcDriver`) and update the import in `main.py`. Keep machine-specific commands in `driver.py`; `gui_driver.py` provides reusable automation helpers and `cua_client.py` handles the MCP transport and desktop input. If you override the constructor, call `super().__init__(target_app)`.
-5. **Run the tests** (`uv run python -m unittest discover -s tests`) and try each command against the real app.
-
-### Building commands that confirm completion
-
-Use Google-style docstrings for every public operation and command: a one-sentence summary, relevant behavior or preconditions, `Args:` describing every parameter (including units, limits, and defaults), `Returns:` naming the returned fields, and `Raises:` for expected failures. Omit `Args:` for parameterless methods. Keep command docstrings self-contained because PUDA publishes them in the command catalog. See `Driver.import_file` for the complete format; do not put YAML fences inside Python docstrings.
-
-PUDA reports success when a command returns. Each command must define what that return proves. A successful click, closed file dialog, or elapsed sleep does not prove the instrument completed an operation.
-
-`import_file` calls `wait_for_element` for verification and returns only `{"imported_file": file_path}` after that check succeeds. Failed verification raises instead of returning a false result. The command does not take an extra screenshot after verification; request `capture_screenshot` separately when visual feedback is needed.
-
-1. Check preconditions before input: the correct application state, required controls, and machine-specific constraints.
-2. Choose a success indicator tied to this operation, such as the expected method name together with a loaded status. Avoid generic Ready labels or filenames that appear while a file is merely selected. Inspect actual accessibility labels and roles; the template's `Loaded method.xml` and `Import failed` are examples to replace.
-3. Rule out stale success. The import example rejects a success label already present before input. Applications that retain status must instead use a job ID, state transition, or another operation-specific check.
-4. Perform each action once. Wait for controls to become available between steps. `wait_for_element(label, role="", timeout=30, poll_interval=0.5, error_labels=[...])` captures fresh accessibility data and returns only one enabled exact match. It raises `TimeoutError` when absent; ambiguity and capture failures propagate immediately. Known error labels in the same capture take precedence over success, including disabled error text.
-5. Return evidence after verification, such as the loaded method, observed status, or run ID. Raise on failure or timeout; returning `False` is still a successful PUDA response. Do not automatically repeat imports or start actions after a timeout: inspect the current state first.
-
-The import example checks for a new exact success label after the dialog closes. It can only prove what that indicator means in your application. If completion requires multiple conditions (for example, loading has stopped and the correct method is active), implement that check in `driver.py`. If the application exposes no reliable accessibility status, use an application API, output artifact, or an explicit external verification step instead of reporting unverified success.
-
-Define long-running operations precisely: `start_run` can return after observing Running, while `wait_for_run_completion` waits for the experiment to finish. Timeouts are per wait phase, not a total command deadline; an in-flight capture has its own timeout. Polling foregrounds the application and invalidates coordinate capture IDs.
-
-Test delayed success, stale indicators, disabled controls, ambiguous matches, known errors, capture failures, and timeouts with mocked observations. Then validate against the real instrument application; offline tests cannot establish that a label actually means success.
+Test commands, their invalid states, stale/ambiguous selectors, disabled controls,
+known errors and timeouts. Verify both the exact remote catalog and continued
+internal inheritance using `uv run python -m unittest discover -s tests`.
+Offline tests are not evidence of live physical readiness or successful GUI input.
 
 ### Telemetry
 

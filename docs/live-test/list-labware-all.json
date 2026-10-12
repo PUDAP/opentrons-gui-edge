@@ -1,0 +1,602 @@
+{
+  "labware": [
+    {
+      "name": "Agilent 1 Well Reservoir 290 mL",
+      "category": "Reservoir",
+      "api_name": "agilent_1_reservoir_290ml"
+    },
+    {
+      "name": "Applied Biosystems MicroAmp 384 Well Plate 40 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "appliedbiosystemsmicroamp_384_wellplate_40ul"
+    },
+    {
+      "name": "Axygen 1 Well Reservoir 90 mL",
+      "category": "Reservoir",
+      "api_name": "axygen_1_reservoir_90ml"
+    },
+    {
+      "name": "Axygen 96 Well Plate 500 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "axygen_96_wellplate_500ul"
+    },
+    {
+      "name": "Bio-Rad 384 Well Plate 50 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "biorad_384_wellplate_50ul"
+    },
+    {
+      "name": "Bio-Rad 96 Well Plate 200 \u00b5L PCR",
+      "category": "Well Plate",
+      "api_name": "biorad_96_wellplate_200ul_pcr"
+    },
+    {
+      "name": "Black 96-well Microtiter Plate Lid",
+      "category": "Lid",
+      "api_name": "black_96_well_microtiter_plate_lid"
+    },
+    {
+      "name": "Corning 12 Well Plate 6.9 mL Flat",
+      "category": "Well Plate",
+      "api_name": "corning_12_wellplate_6.9ml_flat"
+    },
+    {
+      "name": "Corning 24 Well Plate 3.4 mL Flat",
+      "category": "Well Plate",
+      "api_name": "corning_24_wellplate_3.4ml_flat"
+    },
+    {
+      "name": "Corning 384 Well Plate 112 \u00b5L Flat",
+      "category": "Well Plate",
+      "api_name": "corning_384_wellplate_112ul_flat"
+    },
+    {
+      "name": "Corning 48 Well Plate 1.6 mL Flat",
+      "category": "Well Plate",
+      "api_name": "corning_48_wellplate_1.6ml_flat"
+    },
+    {
+      "name": "Corning 6 Well Plate 16.8 mL Flat",
+      "category": "Well Plate",
+      "api_name": "corning_6_wellplate_16.8ml_flat"
+    },
+    {
+      "name": "Corning 96 Well Plate 330 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "corning_96_wellplate_330ul"
+    },
+    {
+      "name": "Corning 96 Well Plate 360 \u00b5L Flat",
+      "category": "Well Plate",
+      "api_name": "corning_96_wellplate_360ul_flat"
+    },
+    {
+      "name": "Corning 96 Wellplate 360ul Lid",
+      "category": "Lid",
+      "api_name": "corning_96_wellplate_360ul_lid"
+    },
+    {
+      "name": "Corning Falcon 384 Well Microtest Plate 130 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "corning_falcon_384_wellplate_130ul_flat"
+    },
+    {
+      "name": "Corning Falcon 384 Well Microtest Plate 130 \u00b5L Lid",
+      "category": "Lid",
+      "api_name": "corning_falcon_384_wellplate_130ul_flat_lid"
+    },
+    {
+      "name": "Costar 96 Well Plate 2.2 mL",
+      "category": "Well Plate",
+      "api_name": "costar_96_wellplate_2.2ml"
+    },
+    {
+      "name": "Eppendorf 384 Well Plate 45 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "eppendorf_384_wellplate_45ul"
+    },
+    {
+      "name": "Eppendorf 96 Protein LoBind Deepwell Plate 2 mL",
+      "category": "Well Plate",
+      "api_name": "eppendorf_96_wellplate_2000ul_lobind"
+    },
+    {
+      "name": "Eppendorf 96 Protein LoBind Deepwell Plate 500 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "eppendorf_96_wellplate_500ul_lobind"
+    },
+    {
+      "name": "Eppendorf 96 Well DNA LoBind Microplate 350 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "eppendorf_96_wellplate_350ul_lobind"
+    },
+    {
+      "name": "Eppendorf 96 Well Plate 1000 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "eppendorf_96_wellplate_1000ul"
+    },
+    {
+      "name": "Eppendorf 96 Well Plate 150 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "eppendorf_96_wellplate_150ul"
+    },
+    {
+      "name": "Eppendorf 96 Well Plate 2 mL",
+      "category": "Well Plate",
+      "api_name": "eppendorf_96_wellplate_2000ul"
+    },
+    {
+      "name": "Eppendorf 96 Well Plate 500 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "eppendorf_96_wellplate_500ul"
+    },
+    {
+      "name": "(Retired) GEB 96 Tip Rack 10 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "geb_96_tiprack_10ul"
+    },
+    {
+      "name": "(Retired) GEB 96 Tip Rack 1000 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "geb_96_tiprack_1000ul"
+    },
+    {
+      "name": "Greiner 384 Well Plate 240 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "greiner_384_wellplate_240ul"
+    },
+    {
+      "name": "Greiner 96 Well Plate 323 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "greiner_96_wellplate_323ul"
+    },
+    {
+      "name": "Greiner 96 Well Plate 340 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "greiner_96_wellplate_340ul_chimney"
+    },
+    {
+      "name": "Greiner 96 Well Plate 382 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "greiner_96_wellplate_382ul"
+    },
+    {
+      "name": "ibidi 96 Square Well Flat Bottom Plate 300 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "ibidi_96_square_well_plate_300ul"
+    },
+    {
+      "name": "ibidi 96 Square Well Flat Bottom Plate 300 \u00b5L Lid",
+      "category": "Lid",
+      "api_name": "ibidi_96_square_well_plate_300ul_lid"
+    },
+    {
+      "name": "MILLIPLEX (R) 96-well Microtiter Plate",
+      "category": "Well Plate",
+      "api_name": "milliplex_r_96_well_microtiter_plate"
+    },
+    {
+      "name": "NEST 1 Well Reservoir 195 mL",
+      "category": "Reservoir",
+      "api_name": "nest_1_reservoir_195ml"
+    },
+    {
+      "name": "NEST 1 Well Reservoir 290 mL",
+      "category": "Reservoir",
+      "api_name": "nest_1_reservoir_290ml"
+    },
+    {
+      "name": "NEST 12 Well Reservoir 15 mL",
+      "category": "Reservoir",
+      "api_name": "nest_12_reservoir_15ml"
+    },
+    {
+      "name": "NEST 12 Well Reservoir 22 mL",
+      "category": "Reservoir",
+      "api_name": "nest_12_reservoir_22ml"
+    },
+    {
+      "name": "NEST 24 Well Plate 10.4mL",
+      "category": "Well Plate",
+      "api_name": "nest_24_wellplate_10.4ml"
+    },
+    {
+      "name": "NEST 8 Well Reservoir 22 mL",
+      "category": "Reservoir",
+      "api_name": "nest_8_reservoir_22ml"
+    },
+    {
+      "name": "NEST 96 Deep Well Plate 2 mL",
+      "category": "Well Plate",
+      "api_name": "nest_96_wellplate_2ml_deep"
+    },
+    {
+      "name": "NEST 96 Well Plate 100 \u00b5L PCR Full Skirt",
+      "category": "Well Plate",
+      "api_name": "nest_96_wellplate_100ul_pcr_full_skirt"
+    },
+    {
+      "name": "NEST 96 Well Plate 200 \u00b5L Flat",
+      "category": "Well Plate",
+      "api_name": "nest_96_wellplate_200ul_flat"
+    },
+    {
+      "name": "Nunc 384 Well Plate 100 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "nunc_384_wellplate_100ul"
+    },
+    {
+      "name": "Nunc 96 Well Plate 450 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "nunc_96_wellplate_450ul"
+    },
+    {
+      "name": "Opentrons 10 Tube Rack with Falcon 4x50 mL, 6x15 mL Conical",
+      "category": "Tube Rack",
+      "api_name": "opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical"
+    },
+    {
+      "name": "Opentrons 10 Tube Rack with NEST 4x50 mL, 6x15 mL Conical",
+      "category": "Tube Rack",
+      "api_name": "opentrons_10_tuberack_nest_4x50ml_6x15ml_conical"
+    },
+    {
+      "name": "Opentrons 15 Tube Rack with Eppendorf 15 mL",
+      "category": "Tube Rack",
+      "api_name": "opentrons_15_tuberack_eppendorf_15ml_conical"
+    },
+    {
+      "name": "Opentrons 15 Tube Rack with Falcon 15 mL Conical",
+      "category": "Tube Rack",
+      "api_name": "opentrons_15_tuberack_falcon_15ml_conical"
+    },
+    {
+      "name": "Opentrons 15 Tube Rack with NEST 15 mL Conical",
+      "category": "Tube Rack",
+      "api_name": "opentrons_15_tuberack_nest_15ml_conical"
+    },
+    {
+      "name": "Opentrons 24 Tube Rack with Eppendorf 1.5 mL Safe-Lock Snapcap",
+      "category": "Tube Rack",
+      "api_name": "opentrons_24_tuberack_eppendorf_1.5ml_safelock_snapcap"
+    },
+    {
+      "name": "Opentrons 24 Tube Rack with Eppendorf 2 mL Safe-Lock Snapcap",
+      "category": "Tube Rack",
+      "api_name": "opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap"
+    },
+    {
+      "name": "Opentrons 24 Tube Rack with Generic 2 mL Screwcap",
+      "category": "Tube Rack",
+      "api_name": "opentrons_24_tuberack_generic_2ml_screwcap"
+    },
+    {
+      "name": "Opentrons 24 Tube Rack with NEST 0.5 mL Screwcap",
+      "category": "Tube Rack",
+      "api_name": "opentrons_24_tuberack_nest_0.5ml_screwcap"
+    },
+    {
+      "name": "Opentrons 24 Tube Rack with NEST 1.5 mL Screwcap",
+      "category": "Tube Rack",
+      "api_name": "opentrons_24_tuberack_nest_1.5ml_screwcap"
+    },
+    {
+      "name": "Opentrons 24 Tube Rack with NEST 1.5 mL Snapcap",
+      "category": "Tube Rack",
+      "api_name": "opentrons_24_tuberack_nest_1.5ml_snapcap"
+    },
+    {
+      "name": "Opentrons 24 Tube Rack with NEST 2 mL Screwcap",
+      "category": "Tube Rack",
+      "api_name": "opentrons_24_tuberack_nest_2ml_screwcap"
+    },
+    {
+      "name": "Opentrons 24 Tube Rack with NEST 2 mL Snapcap",
+      "category": "Tube Rack",
+      "api_name": "opentrons_24_tuberack_nest_2ml_snapcap"
+    },
+    {
+      "name": "Opentrons 24 Well Aluminum Block with Generic 2 mL Screwcap",
+      "category": "Aluminum Block",
+      "api_name": "opentrons_24_aluminumblock_generic_2ml_screwcap"
+    },
+    {
+      "name": "Opentrons 24 Well Aluminum Block with NEST 0.5 mL Screwcap",
+      "category": "Aluminum Block",
+      "api_name": "opentrons_24_aluminumblock_nest_0.5ml_screwcap"
+    },
+    {
+      "name": "Opentrons 24 Well Aluminum Block with NEST 1.5 mL Screwcap",
+      "category": "Aluminum Block",
+      "api_name": "opentrons_24_aluminumblock_nest_1.5ml_screwcap"
+    },
+    {
+      "name": "Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap",
+      "category": "Aluminum Block",
+      "api_name": "opentrons_24_aluminumblock_nest_1.5ml_snapcap"
+    },
+    {
+      "name": "Opentrons 24 Well Aluminum Block with NEST 2 mL Screwcap",
+      "category": "Aluminum Block",
+      "api_name": "opentrons_24_aluminumblock_nest_2ml_screwcap"
+    },
+    {
+      "name": "Opentrons 24 Well Aluminum Block with NEST 2 mL Snapcap",
+      "category": "Aluminum Block",
+      "api_name": "opentrons_24_aluminumblock_nest_2ml_snapcap"
+    },
+    {
+      "name": "Opentrons 6 Tube Rack with Falcon 50 mL Conical",
+      "category": "Tube Rack",
+      "api_name": "opentrons_6_tuberack_falcon_50ml_conical"
+    },
+    {
+      "name": "Opentrons 6 Tube Rack with NEST 50 mL Conical",
+      "category": "Tube Rack",
+      "api_name": "opentrons_6_tuberack_nest_50ml_conical"
+    },
+    {
+      "name": "Opentrons 96 Deep Well Heater-Shaker Adapter",
+      "category": "Adapter",
+      "api_name": "opentrons_96_deep_well_adapter"
+    },
+    {
+      "name": "(Retired) Opentrons 96 Deep Well Heater-Shaker Adapter with NEST Deep Well Plate 2 mL",
+      "category": "Adapter",
+      "api_name": "opentrons_96_deep_well_adapter_nest_wellplate_2ml_deep"
+    },
+    {
+      "name": "Opentrons 96 Deep Well Temperature Module Adapter",
+      "category": "Adapter",
+      "api_name": "opentrons_96_deep_well_temp_mod_adapter"
+    },
+    {
+      "name": "Opentrons 96 Flat Bottom Heater-Shaker Adapter",
+      "category": "Adapter",
+      "api_name": "opentrons_96_flat_bottom_adapter"
+    },
+    {
+      "name": "(Retired) Opentrons 96 Flat Bottom Heater-Shaker Adapter with NEST 96 Well Plate 200 \u00b5L Flat",
+      "category": "Adapter",
+      "api_name": "opentrons_96_flat_bottom_adapter_nest_wellplate_200ul_flat"
+    },
+    {
+      "name": "Opentrons 96 PCR Heater-Shaker Adapter",
+      "category": "Adapter",
+      "api_name": "opentrons_96_pcr_adapter"
+    },
+    {
+      "name": "(Retired) Opentrons 96 PCR Heater-Shaker Adapter with NEST Well Plate 100 \u00b5l",
+      "category": "Adapter",
+      "api_name": "opentrons_96_pcr_adapter_nest_wellplate_100ul_pcr_full_skirt"
+    },
+    {
+      "name": "Opentrons 96 Well Aluminum Block",
+      "category": "Aluminum Block",
+      "api_name": "opentrons_96_well_aluminum_block"
+    },
+    {
+      "name": "(Retired) Opentrons 96 Well Aluminum Block with Bio-Rad Well Plate 200 \u00b5L",
+      "category": "Aluminum Block",
+      "api_name": "opentrons_96_aluminumblock_biorad_wellplate_200ul"
+    },
+    {
+      "name": "Opentrons 96 Well Aluminum Block with Generic PCR Strip 200 \u00b5L",
+      "category": "Aluminum Block",
+      "api_name": "opentrons_96_aluminumblock_generic_pcr_strip_200ul"
+    },
+    {
+      "name": "Opentrons 96 Well Aluminum Block with NEST Well Plate 100 \u00b5L",
+      "category": "Aluminum Block",
+      "api_name": "opentrons_96_aluminumblock_nest_wellplate_100ul"
+    },
+    {
+      "name": "Opentrons Aluminum Flat Bottom Plate",
+      "category": "Aluminum Block",
+      "api_name": "opentrons_aluminum_flat_bottom_plate"
+    },
+    {
+      "name": "Opentrons Flex 96 Filter Tip Rack 1000 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_filtertiprack_1000ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Filter Tip Rack 20 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_filtertiprack_20ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Filter Tip Rack 200 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_filtertiprack_200ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Filter Tip Rack 50 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_filtertiprack_50ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Tip Rack 1000 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_tiprack_1000ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Tip Rack 20 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_tiprack_20ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Tip Rack 200 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_tiprack_200ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Tip Rack 50 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_tiprack_50ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Tip Rack Adapter",
+      "category": "Adapter",
+      "api_name": "opentrons_flex_96_tiprack_adapter"
+    },
+    {
+      "name": "Opentrons Flex Deck Riser",
+      "category": "Adapter",
+      "api_name": "opentrons_flex_deck_riser"
+    },
+    {
+      "name": "Opentrons Flex EV Resin Tips Short Adapter for Third-party Evotips",
+      "category": "Adapter",
+      "api_name": "ev_resin_tips_flex_short_adapter"
+    },
+    {
+      "name": "Opentrons Flex EV Resin Tips Tall Adapter for Third-party Evotips",
+      "category": "Adapter",
+      "api_name": "ev_resin_tips_flex_tall_adapter"
+    },
+    {
+      "name": "Opentrons Flex EV Resin Tips Tall Adapter for Third-party Evotips in 96 Tip Rack Adapter",
+      "category": "Adapter",
+      "api_name": "ev_resin_tips_flex_96_tiprack_adapter"
+    },
+    {
+      "name": "Opentrons Flex EV Resin Tips Top Adapter with Third-party Evotips",
+      "category": "Well Plate",
+      "api_name": "ev_resin_tips_flex_96_labware"
+    },
+    {
+      "name": "Opentrons Flex Tip Rack Lid",
+      "category": "Lid",
+      "api_name": "opentrons_flex_tiprack_lid"
+    },
+    {
+      "name": "Opentrons OT-2 96 Filter Tip Rack 10 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_filtertiprack_10ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Filter Tip Rack 1000 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_filtertiprack_1000ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Filter Tip Rack 20 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_filtertiprack_20ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Filter Tip Rack 200 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_filtertiprack_200ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Tip Rack 10 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_tiprack_10ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Tip Rack 1000 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_tiprack_1000ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Tip Rack 20 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_tiprack_20ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Tip Rack 300 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_tiprack_300ul"
+    },
+    {
+      "name": "Opentrons Tough 22mL 12 Well Reservoir",
+      "category": "Reservoir",
+      "api_name": "opentrons_tough_12_reservoir_22ml"
+    },
+    {
+      "name": "Opentrons Tough 300 mL 1 Well Reservoir",
+      "category": "Reservoir",
+      "api_name": "opentrons_tough_1_reservoir_300ml"
+    },
+    {
+      "name": "Opentrons Tough 72 mL 4 Well Reservoir",
+      "category": "Reservoir",
+      "api_name": "opentrons_tough_4_reservoir_72ml"
+    },
+    {
+      "name": "Opentrons Tough 96 Well Plate 200 \u00b5L PCR Full Skirt",
+      "category": "Well Plate",
+      "api_name": "opentrons_96_wellplate_200ul_pcr_full_skirt"
+    },
+    {
+      "name": "Opentrons Tough PCR Auto-Sealing Lid",
+      "category": "Lid",
+      "api_name": "opentrons_tough_pcr_auto_sealing_lid"
+    },
+    {
+      "name": "Opentrons Tough Universal Lid",
+      "category": "Lid",
+      "api_name": "opentrons_tough_universal_lid"
+    },
+    {
+      "name": "Opentrons Universal Flat Heater-Shaker Adapter",
+      "category": "Adapter",
+      "api_name": "opentrons_universal_flat_adapter"
+    },
+    {
+      "name": "Opentrons Universal Flat Heater-Shaker Adapter Type B",
+      "category": "Adapter",
+      "api_name": "opentrons_universal_flat_adapter_type_b"
+    },
+    {
+      "name": "(Retired) Opentrons Universal Flat Heater-Shaker Adapter with Corning 384 Well Plate 112 \u00b5l Flat",
+      "category": "Adapter",
+      "api_name": "opentrons_universal_flat_adapter_corning_384_wellplate_112ul_flat"
+    },
+    {
+      "name": "SMC 384 Well Commercial Read Plate",
+      "category": "Well Plate",
+      "api_name": "smc_384_read_plate"
+    },
+    {
+      "name": "Thermo Fisher Scientific 96 Well Plate 800 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "thermoscientific_96_wellplate_800ul"
+    },
+    {
+      "name": "Thermo Scientific ABgene 96 Well Plate 1.2mL",
+      "category": "Well Plate",
+      "api_name": "thermoscientific_abgene_96_wellplate_1.2ml"
+    },
+    {
+      "name": "Thermo Scientific Nunc 96 Well Plate 1300 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "thermoscientificnunc_96_wellplate_1300ul"
+    },
+    {
+      "name": "Thermo Scientific Nunc 96 Well Plate 2000 \u00b5L",
+      "category": "Well Plate",
+      "api_name": "thermoscientificnunc_96_wellplate_2000ul"
+    },
+    {
+      "name": "ThermoFisher Nunc MaxiSorp Lockwell ELISA",
+      "category": "Well Plate",
+      "api_name": "thermofisher_nunc_maxisorp_lockwell_elisa"
+    },
+    {
+      "name": "USA Scientific 12 Well Reservoir 22 mL",
+      "category": "Reservoir",
+      "api_name": "usascientific_12_reservoir_22ml"
+    },
+    {
+      "name": "USA Scientific 96 Deep Well Plate 2.4 mL",
+      "category": "Well Plate",
+      "api_name": "usascientific_96_wellplate_2.4ml_deep"
+    }
+  ],
+  "count": 119,
+  "category": "All",
+  "sort_by": "Alphabetical"
+}

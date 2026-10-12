@@ -1,0 +1,97 @@
+{
+  "labware": [
+    {
+      "name": "Opentrons OT-2 96 Tip Rack 300 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_tiprack_300ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Tip Rack 20 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_tiprack_20ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Tip Rack 1000 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_tiprack_1000ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Tip Rack 10 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_tiprack_10ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Filter Tip Rack 200 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_filtertiprack_200ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Filter Tip Rack 20 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_filtertiprack_20ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Filter Tip Rack 1000 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_filtertiprack_1000ul"
+    },
+    {
+      "name": "Opentrons OT-2 96 Filter Tip Rack 10 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_96_filtertiprack_10ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Tip Rack 50 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_tiprack_50ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Tip Rack 200 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_tiprack_200ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Tip Rack 20 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_tiprack_20ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Tip Rack 1000 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_tiprack_1000ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Filter Tip Rack 50 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_filtertiprack_50ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Filter Tip Rack 200 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_filtertiprack_200ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Filter Tip Rack 20 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_filtertiprack_20ul"
+    },
+    {
+      "name": "Opentrons Flex 96 Filter Tip Rack 1000 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "opentrons_flex_96_filtertiprack_1000ul"
+    },
+    {
+      "name": "(Retired) GEB 96 Tip Rack 1000 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "geb_96_tiprack_1000ul"
+    },
+    {
+      "name": "(Retired) GEB 96 Tip Rack 10 \u00b5L",
+      "category": "Tip Rack",
+      "api_name": "geb_96_tiprack_10ul"
+    }
+  ],
+  "count": 18,
+  "category": "Tip Rack",
+  "sort_by": "Reverse alphabetical"
+}
