@@ -7,7 +7,7 @@ from GuiDriver for internal composition; they are not exposed as commands.
 import math
 import re
 import time
-from collections import Counter, deque
+from collections import Counter
 from pathlib import Path
 
 from puda import command
@@ -31,32 +31,6 @@ class Driver(GuiDriver):
         super().__init__(target_app=target_app)
 
     # Shared snapshot inspection and validation.
-
-    @staticmethod
-    def _children_by_parent(elements: list[dict]) -> dict[int | None, list[dict]]:
-        """Index a snapshot's children while preserving accessibility order."""
-        children = {}
-        for element in elements:
-            children.setdefault(element.get("parent_index"), []).append(element)
-        return children
-
-    @staticmethod
-    def _descendants(
-        children: dict[int | None, list[dict]], root: int, error: str
-    ) -> list[dict]:
-        """Walk snapshot descendants breadth-first, rejecting repeated nodes."""
-        result = []
-        pending = deque(children.get(root, []))
-        visited = {root}
-        while pending:
-            element = pending.popleft()
-            index = element["element_index"]
-            if index in visited:
-                raise RuntimeError(error)
-            visited.add(index)
-            result.append(element)
-            pending.extend(children.get(index, []))
-        return result
 
     def _capture_elements(self) -> list[dict]:
         """Capture fresh accessibility elements; indices belong to this snapshot."""
