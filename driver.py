@@ -12,7 +12,7 @@ from gui_driver import ElementNotFoundError, GuiDriver
 
 
 class Driver(GuiDriver):
-    """Opentrons workflows with an explicit remote command allowlist."""
+    """Opentrons workflows; to run a protocol, load it, start setup, select a robot, then start the run."""
 
     def __init__(self, target_app: str) -> None:
         """Connect the GUI backend for this instrument.
@@ -31,7 +31,7 @@ class Driver(GuiDriver):
     # once, and verify an operation-specific result before returning success.
 
     @command
-    def get_protocol_list(self) -> dict:
+    def list_protocols(self) -> dict:
         """Read imported protocol cards from the Opentrons App's Protocols page.
 
         Returns names, instrument labels and displayed update timestamps without
@@ -94,6 +94,10 @@ class Driver(GuiDriver):
     def import_protocol(self, file_path: str, timeout: float = 30.0) -> dict:
         """Import a protocol into the Opentrons App using the system file picker.
 
+        This loads the protocol as the first step of the run workflow. After a
+        successful import, call start_setup with its displayed name, then call
+        select_robot, and finally call start_run.
+
         Opens Protocols, clicks Import, then browse in the import sidebar and
         selects the file with the native chooser. Returns only after observing
         exactly one new protocol card. Does not start setup or run the robot.
@@ -138,7 +142,7 @@ class Driver(GuiDriver):
         def signature(card):
             return (card["name"], tuple(card["instruments"]), card["updated"])
 
-        before = Counter(signature(card) for card in self.get_protocol_list()["protocols"])
+        before = Counter(signature(card) for card in self.list_protocols()["protocols"])
         self.click_element("Import", role="push button")
         sidebar = self.wait_for_element("Import a Protocol", role="heading", timeout=timeout)
         self._validate_element_position(sidebar, "Import a Protocol")
@@ -147,7 +151,7 @@ class Driver(GuiDriver):
 
         deadline = time.monotonic() + timeout
         while True:
-            cards = self.get_protocol_list()["protocols"]
+            cards = self.list_protocols()["protocols"]
             remaining = before.copy()
             added = []
             for card in cards:
@@ -168,6 +172,10 @@ class Driver(GuiDriver):
     @command
     def start_setup(self, protocol_name: str) -> dict:
         """Open a protocol's setup entry screen through its three-dot menu.
+
+        The protocol must already be loaded in the library, using import_protocol
+        if necessary. After this command succeeds, call select_robot and then
+        start_run.
 
         Matches the exact, case-sensitive protocol name in the complete library;
         duplicate names are rejected. Opens only that card's overflow menu and
@@ -193,7 +201,7 @@ class Driver(GuiDriver):
 
         if not isinstance(protocol_name, str) or not protocol_name.strip():
             raise ValueError("protocol_name must be a non-empty exact name")
-        matches = [p for p in self.get_protocol_list()["protocols"]
+        matches = [p for p in self.list_protocols()["protocols"]
                    if p["name"] == protocol_name]
         if not matches:
             raise ElementNotFoundError(f"No protocol named {protocol_name!r}")
@@ -338,6 +346,10 @@ class Driver(GuiDriver):
     def select_robot(self, robot_name: str = "") -> dict:
         """Select a listed robot in the currently open setup robot-choice screen.
 
+        Call start_setup for a loaded protocol before this command. After robot
+        selection and setup succeed, verify physical readiness and authorization,
+        then call start_run.
+
         An omitted or empty name chooses the first listed robot in accessibility
         order. A supplied name must match exactly and uniquely. Clicks the enabled
         Proceed to setup button once, then waits for the intended robot's visible
@@ -393,6 +405,10 @@ class Driver(GuiDriver):
     @command
     def start_run(self, timeout: float = 30.0) -> dict:
         """Start the currently prepared, authorized protocol run in the App.
+
+        Required command sequence: load the protocol with import_protocol if it is
+        not already in the library, call start_setup for that protocol, call
+        select_robot, then call start_run. Do not skip setup or robot selection.
 
         The caller must verify robot/protocol identity, analysis, physical readiness
         and run authorization before invocation. Requires Not started and one

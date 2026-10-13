@@ -433,7 +433,7 @@ class CommandSurfaceTests(unittest.TestCase):
     def test_only_explicit_machine_commands_are_remote(self):
         self.assertEqual(
             resolve_command_names(object.__new__(Driver)),
-            {"capture_screenshot", "get_protocol_list", "import_protocol",
+            {"capture_screenshot", "list_protocols", "import_protocol",
              "start_setup", "select_robot", "start_run", "pause_run", "resume_run",
              "cancel_run", "get_run_status", "list_devices", "list_labware"},
         )

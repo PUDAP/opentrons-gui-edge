@@ -7,7 +7,7 @@ Screenshot contract updated from upstream commit
 `e80b62a2cfa70c1f54a3405eb35114c7717bd7bf`: a single capture can return
 image, capture context, and copied accessibility elements; `get_elements` is removed.
 
-Implemented Opentrons command: `get_protocol_list()` (first high-level `@command`
+Implemented Opentrons command: `list_protocols()` (first high-level `@command`
 in `driver.py`). It navigates to Protocols when necessary and returns
 `{"protocols": [{"name": "...", "instruments": [], "updated": "..."}], "count": N}`.
 Duplicate names are preserved; timestamps use the App display format. It reads
@@ -17,7 +17,7 @@ empty-library layouts) raise instead of claiming an empty list. No robot actions
 are dispatched. Verified on the live desktop library: 8 cards; 61 tests pass.
 
 After configuring and starting the edge, invoke:
-`puda machine run opentron-gui-edge get_protocol_list`
+`puda machine run opentron-gui-edge list_protocols`
 
 `import_protocol(file_path, timeout=30.0)` imports an existing absolute `.py` or
 `.json` path through Protocols → Import → browse → the system file picker. It
@@ -275,7 +275,7 @@ uv run python main.py
 
 `driver.py` exposes these commands through `@command`:
 
-- Protocols: `get_protocol_list`, `import_protocol`, `start_setup`, `select_robot`.
+- Protocols: `list_protocols`, `import_protocol`, `start_setup`, `select_robot`.
 - Runs: `start_run`, `pause_run`, `resume_run`, `cancel_run`, `get_run_status`.
 - Inventory: `list_devices`, `list_labware`.
 - Inspection: `capture_screenshot` (optionally with `include_elements=True`).
@@ -302,7 +302,7 @@ Constructing `Driver` connects the MCP client. `main.py` calls `_close()` in a
 ```bash
 puda machine run opentron-gui-edge capture_screenshot
 puda machine run opentron-gui-edge capture_screenshot --include_elements true
-puda machine run opentron-gui-edge get_protocol_list
+puda machine run opentron-gui-edge list_protocols
 puda machine run opentron-gui-edge list_labware --category "Tip Rack"
 ```
 

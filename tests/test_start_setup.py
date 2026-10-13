@@ -19,7 +19,7 @@ def card_page():
 class StartSetupTests(unittest.TestCase):
     def make_driver(self):
         d = object.__new__(Driver)
-        d.get_protocol_list = Mock(return_value={'protocols': [{'name': 'Water'}]})
+        d.list_protocols = Mock(return_value={'protocols': [{'name': 'Water'}]})
         # Proceed may remain disabled until a robot is selected; that's still open.
         d.capture_screenshot = Mock(side_effect=[{'elements': card_page()},
             {'elements': [e(8, 'push button', 'Proceed to setup', enabled=False)]}])
@@ -39,7 +39,7 @@ class StartSetupTests(unittest.TestCase):
 
     def test_duplicate_name_is_rejected_before_menu_input(self):
         d = self.make_driver()
-        d.get_protocol_list.return_value = {'protocols': [{'name': 'Water'}, {'name': 'Water'}]}
+        d.list_protocols.return_value = {'protocols': [{'name': 'Water'}, {'name': 'Water'}]}
         with self.assertRaisesRegex(RuntimeError, 'Ambiguous protocol name'):
             d.start_setup('Water')
         d._cua.click.assert_not_called()
@@ -54,7 +54,7 @@ class StartSetupTests(unittest.TestCase):
         d = self.make_driver()
         with self.assertRaises(ValueError):
             d.start_setup(' ')
-        d.get_protocol_list.assert_not_called()
+        d.list_protocols.assert_not_called()
 
     def test_ambiguous_overflow_button_is_rejected(self):
         d = self.make_driver()

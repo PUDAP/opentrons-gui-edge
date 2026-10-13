@@ -40,7 +40,7 @@ class ProtocolListTests(unittest.TestCase):
 
     def test_lists_cards_and_preserves_duplicate_names(self):
         d = self.make_driver(protocol_page())
-        self.assertEqual(d.get_protocol_list(), {
+        self.assertEqual(d.list_protocols(), {
             'protocols': [
                 {'name': 'Water transfer', 'instruments': ['P300 Single-Channel GEN2'],
                  'updated': '10/2/26 16:13'},
@@ -48,7 +48,7 @@ class ProtocolListTests(unittest.TestCase):
             ], 'count': 2,
         })
         d.click_element.assert_not_called()
-        self.assertIn('get_protocol_list', resolve_command_names(object.__new__(Driver)))
+        self.assertIn('list_protocols', resolve_command_names(object.__new__(Driver)))
 
     def test_navigates_to_protocols_from_another_page(self):
         d = self.make_driver([])
@@ -56,22 +56,22 @@ class ProtocolListTests(unittest.TestCase):
             {'elements': [element(1, 'link', 'Protocols', 0)]},
             {'elements': protocol_page()},
         ]
-        self.assertEqual(d.get_protocol_list()['count'], 2)
+        self.assertEqual(d.list_protocols()['count'], 2)
         d.click_element.assert_called_once_with('Protocols', role='link')
 
     def test_missing_page_is_not_reported_as_empty(self):
         d = self.make_driver([])
         with self.assertRaises(RuntimeError):
-            d.get_protocol_list()
+            d.list_protocols()
 
     def test_truncated_list_is_rejected(self):
         d = self.make_driver(protocol_page()[:11])
         with self.assertRaisesRegex(RuntimeError, 'incomplete'):
-            d.get_protocol_list()
+            d.list_protocols()
 
     def test_malformed_card_is_rejected(self):
         elements = protocol_page()
         elements[3]['label'] = 'Instruments'
         d = self.make_driver(elements)
         with self.assertRaisesRegex(RuntimeError, 'card layout'):
-            d.get_protocol_list()
+            d.list_protocols()
