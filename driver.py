@@ -5,6 +5,10 @@ from GuiDriver for internal composition; they are not exposed as commands.
 """
 
 import math
+import re
+import time
+from collections import Counter, deque
+from pathlib import Path
 
 from puda import command
 
@@ -26,9 +30,62 @@ class Driver(GuiDriver):
         """
         super().__init__(target_app=target_app)
 
-    # ── High-level machine commands ────────────────────────────────────────
-    # Add instrument workflows here. Validate preconditions, perform actions
-    # once, and verify an operation-specific result before returning success.
+    # Shared snapshot inspection and validation.
+
+    @staticmethod
+    def _children_by_parent(elements: list[dict]) -> dict[int | None, list[dict]]:
+        """Index a snapshot's children while preserving accessibility order."""
+        children = {}
+        for element in elements:
+            children.setdefault(element.get("parent_index"), []).append(element)
+        return children
+
+    @staticmethod
+    def _descendants(
+        children: dict[int | None, list[dict]], root: int, error: str
+    ) -> list[dict]:
+        """Walk snapshot descendants breadth-first, rejecting repeated nodes."""
+        result = []
+        pending = deque(children.get(root, []))
+        visited = {root}
+        while pending:
+            element = pending.popleft()
+            index = element["element_index"]
+            if index in visited:
+                raise RuntimeError(error)
+            visited.add(index)
+            result.append(element)
+            pending.extend(children.get(index, []))
+        return result
+
+    def _capture_elements(self) -> list[dict]:
+        """Capture fresh accessibility elements; indices belong to this snapshot."""
+        return self.capture_screenshot(include_elements=True)["elements"]
+
+    def _visible_elements(self, context: str) -> list[dict]:
+        """Capture elements with usable on-screen positions."""
+        visible = []
+        for element in self._capture_elements():
+            try:
+                self._validate_element_position(element, context)
+            except RuntimeError:
+                continue
+            visible.append(element)
+        return visible
+
+    @staticmethod
+    def _is_confirmation(element: dict) -> bool:
+        """Recognize native and App-specific confirmation containers."""
+        return (element.get("role") in {"dialog", "alert dialog"}
+                or element.get("label") == "ModalShell_ModalArea")
+
+    @staticmethod
+    def _validate_timeout(timeout: float) -> None:
+        """Reject unbounded or negative command timeouts before GUI input."""
+        if not math.isfinite(timeout) or timeout < 0:
+            raise ValueError("timeout must be finite and non-negative")
+
+    # Protocol library and setup commands.
 
     @command
     def list_protocols(self) -> dict:
@@ -47,7 +104,7 @@ class Driver(GuiDriver):
             RuntimeError: The page or card layout is unsupported, incomplete,
                 ambiguous, or the GUI backend fails.
         """
-        elements = self.capture_screenshot(include_elements=True)["elements"]
+        elements = self._capture_elements()
         links = {e.get("element_index") for e in elements if e.get("role") == "link"}
         on_list = any(e.get("role") == "heading" and e.get("label") == "Protocols"
                       and e.get("parent_index") not in links for e in elements)
@@ -57,10 +114,9 @@ class Driver(GuiDriver):
                 raise RuntimeError("Opentrons Protocols navigation is unavailable")
             self.click_element("Protocols", role="link")
             # Refresh separately: dispatch alone does not establish navigation.
-            import time
             deadline = time.monotonic() + 10.0
             while True:
-                elements = self.capture_screenshot(include_elements=True)["elements"]
+                elements = self._capture_elements()
                 links = {e.get("element_index") for e in elements if e.get("role") == "link"}
                 if any(e.get("role") == "heading" and e.get("label") == "Protocols"
                        and e.get("parent_index") not in links for e in elements):
@@ -70,9 +126,7 @@ class Driver(GuiDriver):
                 time.sleep(0.2)
         if not any(e.get("label") == "Create or download a new protocol" for e in elements):
             raise RuntimeError("Protocol list is incomplete or its accessibility layout is unsupported")
-        children = {}
-        for e in elements:
-            children.setdefault(e.get("parent_index"), []).append(e)
+        children = self._children_by_parent(elements)
         protocols = []
         for e in elements:
             if e.get("role") != "section":
@@ -121,10 +175,6 @@ class Driver(GuiDriver):
             RuntimeError: GUI/picker fails, layout is unsupported, or multiple new
                 entries make import verification ambiguous.
         """
-        from collections import Counter
-        from pathlib import Path
-        import time
-
         if not isinstance(file_path, str) or not file_path.strip():
             raise ValueError("file_path must be a non-empty absolute path")
         path = Path(file_path)
@@ -132,14 +182,13 @@ class Driver(GuiDriver):
             raise ValueError("file_path must be absolute")
         if path.suffix.lower() not in {".py", ".json"}:
             raise ValueError("Protocol file must have a .py or .json extension")
-        if not math.isfinite(timeout) or timeout < 0:
-            raise ValueError("timeout must be finite and non-negative")
+        self._validate_timeout(timeout)
         if not path.is_file():
             raise FileNotFoundError(file_path)
         with path.open("rb") as stream:
             stream.read(1)  # validate readability before any GUI input
 
-        def signature(card):
+        def signature(card: dict) -> tuple[str, tuple[str, ...], str]:
             return (card["name"], tuple(card["instruments"]), card["updated"])
 
         before = Counter(signature(card) for card in self.list_protocols()["protocols"])
@@ -197,8 +246,6 @@ class Driver(GuiDriver):
             TimeoutError: Start setup or the setup entry screen is not observed
                 within 10 seconds per phase. Actions are never automatically retried.
         """
-        import time
-
         if not isinstance(protocol_name, str) or not protocol_name.strip():
             raise ValueError("protocol_name must be a non-empty exact name")
         matches = [p for p in self.list_protocols()["protocols"]
@@ -209,10 +256,8 @@ class Driver(GuiDriver):
             raise RuntimeError(f"Ambiguous protocol name: {protocol_name!r}")
 
         # Resolve the card and its unlabeled overflow button in one fresh capture.
-        elements = self.capture_screenshot(include_elements=True)["elements"]
-        children = {}
-        for element in elements:
-            children.setdefault(element.get("parent_index"), []).append(element)
+        elements = self._capture_elements()
+        children = self._children_by_parent(elements)
         cards = [element for element in elements if element.get("role") == "section"
                  and any(child.get("label") == protocol_name and child.get("role") == "paragraph"
                          for child in children.get(element.get("element_index"), []))
@@ -220,17 +265,9 @@ class Driver(GuiDriver):
                          for child in children.get(element.get("element_index"), []))]
         if len(cards) != 1:
             raise RuntimeError("Protocol card changed or is ambiguous; no menu was opened")
-        descendants = []
-        pending = list(children.get(cards[0]["element_index"], []))
-        visited = set()
-        while pending:
-            element = pending.pop()
-            index = element["element_index"]
-            if index in visited:
-                raise RuntimeError("Malformed accessibility tree")
-            visited.add(index)
-            descendants.append(element)
-            pending.extend(children.get(index, []))
+        descendants = self._descendants(
+            children, cards[0]["element_index"], "Malformed accessibility tree"
+        )
         buttons = [element for element in descendants
                    if element.get("role") == "push button" and element.get("enabled", True)]
         if len(buttons) != 1:
@@ -244,7 +281,7 @@ class Driver(GuiDriver):
 
         deadline = time.monotonic() + 10.0
         while True:
-            elements = self.capture_screenshot(include_elements=True)["elements"]
+            elements = self._capture_elements()
             proceed = [element for element in elements
                        if element.get("label") == "Proceed to setup"
                        and element.get("role") == "push button"]
@@ -260,23 +297,12 @@ class Driver(GuiDriver):
     def _robot_choices(self, elements: list[dict]) -> list[tuple[dict, dict]]:
         """Extract model/name cards only within the open robot-choice drawer."""
         by_index = {e["element_index"]: e for e in elements}
-        children = {}
-        for element in elements:
-            children.setdefault(element.get("parent_index"), []).append(element)
+        children = self._children_by_parent(elements)
 
-        def descendants(index):
-            found = []
-            pending = list(children.get(index, []))
-            seen = set()
-            while pending:
-                element = pending.pop(0)
-                key = element["element_index"]
-                if key in seen:
-                    raise RuntimeError("Malformed robot-choice accessibility tree")
-                seen.add(key)
-                found.append(element)
-                pending.extend(children.get(key, []))
-            return found
+        def descendants(index: int) -> list[dict]:
+            return self._descendants(
+                children, index, "Malformed robot-choice accessibility tree"
+            )
 
         headings = [e for e in elements if e.get("role") == "heading"
                     and " ".join(e.get("label", "").split()).casefold().startswith("choose robot to run")]
@@ -321,17 +347,9 @@ class Driver(GuiDriver):
 
     def _wait_for_robot_setup(self, robot_name: str) -> None:
         """Require visible robot identity and Not started after Proceed dispatch."""
-        import time
-
         deadline = time.monotonic() + 30.0
         while True:
-            visible = []
-            for element in self.capture_screenshot(include_elements=True)["elements"]:
-                try:
-                    self._validate_element_position(element, "setup read-back")
-                except RuntimeError:
-                    continue
-                visible.append(element)
+            visible = self._visible_elements("setup read-back")
             labels = {e.get("label", "") for e in visible}
             drawer_open = any(e.get("role") == "heading" and
                               " ".join(e.get("label", "").split()).casefold().startswith("choose robot to run")
@@ -377,7 +395,7 @@ class Driver(GuiDriver):
         """
         if not isinstance(robot_name, str):
             raise ValueError("robot_name must be a string; omit it to choose the first robot")
-        choices = self._robot_choices(self.capture_screenshot(include_elements=True)["elements"])
+        choices = self._robot_choices(self._capture_elements())
         if not choices:
             raise RuntimeError("No robots are listed in the setup robot-selection screen")
         matches = [choice for choice in choices if choice[0]["label"] == robot_name] if robot_name else [choices[0]]
@@ -389,7 +407,7 @@ class Driver(GuiDriver):
         chosen_name = name_element["label"]
         self._validate_element_position(name_element, f"robot {chosen_name}")
         self._run(self._cua.click(element=int(name_element["element_index"])))
-        observed = [choice for choice in self._robot_choices(self.capture_screenshot(include_elements=True)["elements"])
+        observed = [choice for choice in self._robot_choices(self._capture_elements())
                     if choice[0]["label"] == chosen_name]
         if len(observed) != 1:
             raise RuntimeError("Robot list changed after selection; inspect before retrying")
@@ -431,24 +449,10 @@ class Driver(GuiDriver):
             TimeoutError: Start was dispatched but no accepted transition is observed.
                 Inspect the live run before retrying; dispatch is never repeated.
         """
-        import time
+        self._validate_timeout(timeout)
 
-        if not math.isfinite(timeout) or timeout < 0:
-            raise ValueError("timeout must be finite and non-negative")
-
-        def visible():
-            result = []
-            for element in self.capture_screenshot(include_elements=True)["elements"]:
-                try:
-                    self._validate_element_position(element, "run control/status")
-                except RuntimeError:
-                    continue
-                result.append(element)
-            return result
-
-        elements = visible()
-        if any(e.get("role") in {"dialog", "alert dialog"} or
-               e.get("label") == "ModalShell_ModalArea" for e in elements):
+        elements = self._visible_elements("run control/status")
+        if any(self._is_confirmation(e) for e in elements):
             raise RuntimeError("An existing confirmation must be resolved before Start run")
         labels = {e.get("label", "") for e in elements}
         if "Not started" not in labels or labels.intersection({"Running", "Completed", "Failed", "Stopped"}):
@@ -460,12 +464,11 @@ class Driver(GuiDriver):
         self.click_element("Start run", role="push button")
         deadline = time.monotonic() + timeout
         while True:
-            elements = visible()
+            elements = self._visible_elements("run control/status")
             labels = {e.get("label", "") for e in elements}
             if labels.intersection({"Failed", "Stopped"}):
                 raise RuntimeError("The run reported failure/stopped after Start")
-            if any(e.get("role") in {"dialog", "alert dialog"} or
-                   e.get("label") == "ModalShell_ModalArea" for e in elements):
+            if any(self._is_confirmation(e) for e in elements):
                 raise RuntimeError("Start run confirmation is open; inspect and authorize it explicitly")
             if "Completed" in labels:
                 return {"started": True, "status": "Completed"}
@@ -491,17 +494,9 @@ class Driver(GuiDriver):
             RuntimeError: The current run header/identity is absent or ambiguous,
                 the status is unsupported, or accessibility capture fails.
         """
-        elements = []
-        for element in self.capture_screenshot(include_elements=True)["elements"]:
-            try:
-                self._validate_element_position(element, "run status")
-            except RuntimeError:
-                continue
-            elements.append(element)
-        children = {}
+        elements = self._visible_elements("run status")
+        children = self._children_by_parent(elements)
         by_index = {e["element_index"]: e for e in elements}
-        for element in elements:
-            children.setdefault(element.get("parent_index"), []).append(element)
         headers = []
         for parent, siblings in children.items():
             labels = [e.get("label", "") for e in siblings if e.get("role") == "paragraph"]
@@ -512,7 +507,7 @@ class Driver(GuiDriver):
         parent, siblings = headers[0]
         paragraphs = [e.get("label", "") for e in siblings if e.get("role") == "paragraph"]
 
-        def field(label):
+        def field(label: str) -> str:
             if paragraphs.count(label) != 1:
                 raise RuntimeError(f"Ambiguous run field {label!r}")
             index = paragraphs.index(label) + 1
@@ -540,19 +535,36 @@ class Driver(GuiDriver):
         controls = [e.get("label") for e in siblings if e.get("role") == "push button"
                     and e.get("enabled", True) and e.get("label") in
                     {"Start run", "Pause run", "Resume run", "Cancel run", "Run again"}]
-        modal = any(e.get("role") in {"dialog", "alert dialog"} or
-                    e.get("label") == "ModalShell_ModalArea" for e in elements)
+        modal = any(self._is_confirmation(e) for e in elements)
         return {"robot_name": links[run_index - 1]["label"],
                 "protocol_name": titles[0]["label"], "run_label": run_label,
                 "status": status, "run_time": field("Run Time"),
                 "available_controls": controls, "confirmation_pending": modal}
 
+    def _confirm_cancel_run(self) -> None:
+        """Validate and accept only the recognized cancellation confirmation."""
+        elements = self._capture_elements()
+        areas = [e for e in elements if self._is_confirmation(e)]
+        if len(areas) != 1:
+            raise RuntimeError("Cancel confirmation is absent or ambiguous")
+        self._validate_element_position(areas[0], "cancel confirmation")
+        scoped = self._descendants(
+            self._children_by_parent(elements), areas[0]["element_index"],
+            "Malformed cancel confirmation accessibility tree",
+        )
+        scoped.append(areas[0])
+        if not any(e.get("label") == "Are you sure you want to cancel?" for e in scoped):
+            raise RuntimeError("Unexpected cancel warning; no confirmation was sent")
+        buttons = [e for e in scoped if e.get("label") == "Yes, cancel run"
+                   and e.get("role") == "push button" and e.get("enabled", True)]
+        if len(buttons) != 1:
+            raise RuntimeError("Cancel confirmation control is unavailable or ambiguous")
+        self._validate_element_position(buttons[0], "Yes, cancel run")
+        self.click_element("Yes, cancel run", role="push button")
+
     def _change_run_state(self, control: str, allowed: set[str], expected: set[str], timeout: float) -> dict:
         """Dispatch once and verify a status transition on the same run."""
-        import time
-
-        if not math.isfinite(timeout) or timeout < 0:
-            raise ValueError("timeout must be finite and non-negative")
+        self._validate_timeout(timeout)
         before = self.get_run_status()
         if before["confirmation_pending"]:
             raise RuntimeError("An existing confirmation must be resolved before changing run state")
@@ -574,28 +586,7 @@ class Driver(GuiDriver):
                         raise TimeoutError("Cancel confirmation was sent but cancellation is not verified; inspect before retrying")
                     time.sleep(0.5)
                     continue
-                elements = self.capture_screenshot(include_elements=True)["elements"]
-                areas = [e for e in elements if e.get("label") == "ModalShell_ModalArea"
-                         or e.get("role") in {"dialog", "alert dialog"}]
-                if len(areas) != 1:
-                    raise RuntimeError("Cancel confirmation is absent or ambiguous")
-                self._validate_element_position(areas[0], "cancel confirmation")
-                ids = {areas[0]["element_index"]}
-                # Expand by ancestry without depending on AX element order.
-                while True:
-                    expanded = ids | {e["element_index"] for e in elements if e.get("parent_index") in ids}
-                    if expanded == ids:
-                        break
-                    ids = expanded
-                scoped = [e for e in elements if e["element_index"] in ids]
-                if not any(e.get("label") == "Are you sure you want to cancel?" for e in scoped):
-                    raise RuntimeError("Unexpected cancel warning; no confirmation was sent")
-                buttons = [e for e in scoped if e.get("label") == "Yes, cancel run"
-                           and e.get("role") == "push button" and e.get("enabled", True)]
-                if len(buttons) != 1:
-                    raise RuntimeError("Cancel confirmation control is unavailable or ambiguous")
-                self._validate_element_position(buttons[0], "Yes, cancel run")
-                self.click_element("Yes, cancel run", role="push button")
+                self._confirm_cancel_run()
                 cancel_confirmed = True
                 continue
             if after["status"] in expected:
@@ -675,7 +666,9 @@ class Driver(GuiDriver):
         return self._change_run_state("Cancel run", {"Not started", "Running", "Paused",
                                       "Paused - door open", "Awaiting recovery"}, {"Canceled"}, timeout)
 
-    def _inventory_tree(self, tab: str, elements: list[dict]) -> tuple[int, dict]:
+    def _inventory_tree(
+        self, tab: str, elements: list[dict]
+    ) -> tuple[int, dict[int | None, list[dict]]]:
         """Resolve the inventory page heading, excluding sidebar link headings."""
         by_index = {e["element_index"]: e for e in elements}
         headings = [e for e in elements if e.get("role") == "heading" and e.get("label") == tab
@@ -685,18 +678,14 @@ class Driver(GuiDriver):
         if len(headings) != 1:
             raise RuntimeError(f"Ambiguous {tab} inventory page")
         self._validate_element_position(headings[0], f"{tab} inventory page")
-        children = {}
-        for element in elements:
-            children.setdefault(element.get("parent_index"), []).append(element)
-        return headings[0]["parent_index"], children
+        return headings[0]["parent_index"], self._children_by_parent(elements)
 
     def _open_inventory(self, tab: str) -> list[dict]:
         """Navigate once, then poll a fresh page heading for up to ten seconds."""
-        import time
         self.click_element(tab, role="link")
         deadline = time.monotonic() + 10.0
         while True:
-            elements = self.capture_screenshot(include_elements=True)["elements"]
+            elements = self._capture_elements()
             try:
                 self._inventory_tree(tab, elements)
                 return elements
@@ -707,9 +696,6 @@ class Driver(GuiDriver):
 
     def _expand_device_groups(self, elements: list[dict]) -> list[dict]:
         """Expand each incomplete group once and wait for its advertised cards."""
-        import re
-        import time
-
         toggled = set()
         deadline = time.monotonic() + 10.0
         while True:
@@ -750,7 +736,7 @@ class Driver(GuiDriver):
                 raise TimeoutError("Device group counts did not match captured cards")
             if not clicked:
                 time.sleep(0.2)
-            elements = self.capture_screenshot(include_elements=True)["elements"]
+            elements = self._capture_elements()
 
     @command
     def list_devices(self) -> dict:
@@ -768,8 +754,6 @@ class Driver(GuiDriver):
             RuntimeError: Device layout is unsupported or group counts mismatch.
             TimeoutError: The Devices inventory does not open within ten seconds.
         """
-        import re
-
         elements = self._expand_device_groups(self._open_inventory("Devices"))
         root, children = self._inventory_tree("Devices", elements)
         devices = []
@@ -807,16 +791,10 @@ class Driver(GuiDriver):
         if len(labels) != 1 or labels[0] + 1 >= len(siblings):
             raise RuntimeError(f"Unsupported labware {label} dropdown")
         container = siblings[labels[0] + 1]
-        nodes = []
-        pending = list(children.get(container["element_index"], []))
-        visited = set()
-        while pending:
-            node = pending.pop(0)
-            if node["element_index"] in visited:
-                raise RuntimeError("Malformed labware dropdown accessibility tree")
-            visited.add(node["element_index"])
-            nodes.append(node)
-            pending.extend(children.get(node["element_index"], []))
+        nodes = self._descendants(
+            children, container["element_index"],
+            "Malformed labware dropdown accessibility tree",
+        )
         values = [e for e in nodes if e.get("role") == "paragraph" and e.get("label")]
         if not values:
             raise RuntimeError(f"Labware {label} value is unavailable")
@@ -824,8 +802,6 @@ class Driver(GuiDriver):
 
     def _select_labware_dropdown(self, elements: list[dict], label: str, target: str) -> list[dict]:
         """Select one GUI dropdown option and verify a fresh selected value."""
-        import time
-
         value, options = self._labware_dropdown(elements, label)
         if value["label"] == target and not options:
             return elements
@@ -836,7 +812,7 @@ class Driver(GuiDriver):
         self.click_element(target, role="push button")
         deadline = time.monotonic() + 10.0
         while True:
-            elements = self.capture_screenshot(include_elements=True)["elements"]
+            elements = self._capture_elements()
             value, options = self._labware_dropdown(elements, label)
             if value["label"] == target and not options:
                 return elements
@@ -899,7 +875,6 @@ class Driver(GuiDriver):
                 raise RuntimeError("Unsupported labware card layout")
             labware.append({"name": names[0], "category": paragraphs[0], "api_name": paragraphs[1]})
         return {"labware": labware, "count": len(labware), "category": category, "sort_by": sort_by}
-
 
     # ── Read-only GUI inspection commands ──────────────────────────────────
     # Generic actions remain inherited from GuiDriver for internal use only.

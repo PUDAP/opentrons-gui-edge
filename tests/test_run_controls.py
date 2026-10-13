@@ -91,6 +91,40 @@ class RunControlTests(unittest.TestCase):
             self.assertEqual(d.cancel_run()['status'], 'Canceled')
         self.assertEqual(d.click_element.call_count, 2)
 
+    def test_cancel_finds_nested_confirmation_in_unordered_snapshot(self):
+        d = self.driver(snapshot('Running', ['Cancel run']), snapshot('Canceled', []))
+        d.get_run_status.side_effect = [
+            snapshot('Running', ['Cancel run']),
+            snapshot('Running', ['Cancel run'], True), snapshot('Canceled', [])]
+        d.capture_screenshot = Mock(return_value={'elements': [
+            e(43, 'push button', 'Yes, cancel run', 42),
+            e(41, 'heading', 'Are you sure you want to cancel?', 42),
+            e(42, 'section', parent=40),
+            e(40, 'section', 'ModalShell_ModalArea'),
+            e(50, 'push button', 'Yes, cancel run')]})
+        d._validate_element_position = Mock()
+        self.assertEqual(d.cancel_run()['status'], 'Canceled')
+        self.assertEqual([call.args[0] for call in d.click_element.call_args_list],
+                         ['Cancel run', 'Yes, cancel run'])
+
+    def test_cancel_rejects_malformed_confirmation_before_accepting(self):
+        for malformed in ('cycle', 'duplicate'):
+            with self.subTest(malformed=malformed):
+                d = self.driver(snapshot('Running', ['Cancel run']),
+                                snapshot('Running', ['Cancel run'], True))
+                elements = [
+                    e(40, 'section', 'ModalShell_ModalArea',
+                      parent=42 if malformed == 'cycle' else None),
+                    e(41, 'heading', 'Are you sure you want to cancel?', 40),
+                    e(42, 'push button', 'Yes, cancel run', 40)]
+                if malformed == 'duplicate':
+                    elements.append(e(42, 'section', parent=40))
+                d.capture_screenshot = Mock(return_value={'elements': elements})
+                d._validate_element_position = Mock()
+                with self.assertRaisesRegex(RuntimeError, 'Malformed cancel confirmation'):
+                    d.cancel_run()
+                d.click_element.assert_called_once_with('Cancel run', role='push button')
+
     def test_invalid_state_does_not_click(self):
         for method in ('pause_run','resume_run','cancel_run'):
             d = self.driver(snapshot('Completed',[]), snapshot('Completed',[]))
